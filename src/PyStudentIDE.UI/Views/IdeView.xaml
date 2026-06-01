@@ -1,0 +1,40 @@
+<UserControl
+    x:Class="PyStudentIDE.UI.Views.IdeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:PyStudentIDE.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+
+        <!-- Editor Panel -->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <ToolBar Grid.Row="0">
+                <Button Content="Nuevo" Click="OnNewFile"/>
+                <Button Content="Abrir" Click="OnOpenFile"/>
+                <Button Content="Guardar" Click="OnSaveFile"/>
+                <Button Content="Borrar" Click="OnDeleteFile"/>
+                <Separator/>
+                <Button Content="Ejecutar" Click="OnRun"/>
+                <Button Content="Ejecutar Pruebas" Click="OnRunTests"/>
+                <Separator/>
+                <Button Content="Firmar" Click="OnSignScript"/>
+                <Button Content="Verificar Firma" Click="OnVerifyScript"/>
+                <Separator/>
+                <TextBlock x:Name="ModeIndicator" Text="Modo Entrega Oficial" Foreground="Green" VerticalAlignment="Center" Margin="10,0"/>
+            </ToolBar>
+            <controls:PythonEditor x:Name="CodeEditor" Grid.Row="1"/>
+        </Grid>
+
+        <!-- Terminal Panel -->
+        <Border Grid.Row="1" BorderBrush="#CCC" BorderThickness="0,1,0,0">
+            <controls:TerminalControl x:Name="Terminal"/>
+        </Border>
+    </Grid>
+</UserControl>

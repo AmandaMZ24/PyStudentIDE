@@ -1,0 +1,32 @@
+<UserControl
+    x:Class="PyStudentIDE.UI.Views.AssignmentPanelView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Asignaciones" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
+
+            <TabControl>
+                <TabItem Header="Pendientes">
+                    <ListBox x:Name="PendingList" Height="200"/>
+                </TabItem>
+                <TabItem Header="Entregadas">
+                    <ListBox x:Name="DeliveredList" Height="200"/>
+                </TabItem>
+                <TabItem Header="Vencidas">
+                    <ListBox x:Name="OverdueList" Height="200"/>
+                </TabItem>
+            </TabControl>
+
+            <Border Margin="0,15,0,0" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock x:Name="AssignmentTitle" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock x:Name="AssignmentDescription" Margin="0,5" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="DeadlineText" Foreground="#E67E22" Margin="0,5"/>
+                    <Button x:Name="SubmitButton" Content="Entregar este archivo" Height="35" Margin="0,10,0,0" Click="OnSubmit"/>
+                    <Button x:Name="ResubmitButton" Content="Volver a entregar" Height="35" Margin="0,5,0,0" Click="OnResubmit" Visibility="Collapsed"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyStudentIDE Web</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>PyStudentIDE Web</h1>
+        <p>Cliente web mínimo para autenticar, gestionar cursos y tareas.</p>
+      </header>
+
+      <section class="card">
+        <h2>Configuración API</h2>
+        <div class="grid">
+          <label>
+            Base URL
+            <input id="apiBase" type="text" value="http://localhost:5000" />
+          </label>
+          <button id="saveBase">Guardar</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Registro</h2>
+        <div class="grid">
+          <label>Nombre <input id="regNombre" type="text" /></label>
+          <label>Email <input id="regEmail" type="email" /></label>
+          <label>Password <input id="regPassword" type="password" /></label>
+          <label>IdRol <input id="regRol" type="number" value="2" /></label>
+          <button id="btnRegister">Registrarse</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Login</h2>
+        <div class="grid">
+          <label>Email <input id="loginEmail" type="email" /></label>
+          <label>Password <input id="loginPassword" type="password" /></label>
+          <button id="btnLogin">Ingresar</button>
+        </div>
+        <div class="pill" id="currentUser">Sin sesión</div>
+      </section>
+
+      <section class="card">
+        <h2>Cursos</h2>
+        <div class="grid">
+          <label>Docente ID <input id="cursoDocenteId" type="number" /></label>
+          <label>Código <input id="cursoCodigo" type="text" /></label>
+          <label>Nombre <input id="cursoNombre" type="text" /></label>
+          <label>Periodo <input id="cursoPeriodo" type="text" /></label>
+          <button id="btnCreateCurso">Crear curso</button>
+        </div>
+        <div class="grid">
+          <label>Curso ID <input id="joinCursoId" type="number" /></label>
+          <label>Usuario ID <input id="joinUsuarioId" type="number" /></label>
+          <label>Tipo participación <input id="joinTipo" type="text" value="Estudiante" /></label>
+          <button id="btnJoinCurso">Unirse al curso</button>
+        </div>
+        <div class="grid">
+          <label>Usuario ID (listar cursos) <input id="listCursosUser" type="number" /></label>
+          <button id="btnListCursos">Ver cursos</button>
+        </div>
+        <ul id="cursosList"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Tareas (Asignaciones)</h2>
+        <div class="grid">
+          <label>Docente ID <input id="asigDocenteId" type="number" /></label>
+          <label>Curso ID <input id="asigCursoId" type="number" /></label>
+          <label>Título <input id="asigTitulo" type="text" /></label>
+          <label>Descripción <input id="asigDescripcion" type="text" /></label>
+          <label>Fecha límite <input id="asigFecha" type="datetime-local" /></label>
+          <button id="btnCreateAsignacion">Crear tarea</button>
+        </div>
+        <div class="grid">
+          <label>Asignación ID <input id="updAsigId" type="number" /></label>
+          <label>Título <input id="updTitulo" type="text" /></label>
+          <label>Descripción <input id="updDescripcion" type="text" /></label>
+          <label>Fecha límite <input id="updFecha" type="datetime-local" /></label>
+          <button id="btnUpdateAsignacion">Modificar tarea</button>
+        </div>
+        <div class="grid">
+          <label>Curso ID (ver tareas) <input id="listAsigCursoId" type="number" /></label>
+          <button id="btnListAsignaciones">Ver tareas del curso</button>
+        </div>
+        <ul id="asignacionesList"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Bitácora</h2>
+        <pre id="log"></pre>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

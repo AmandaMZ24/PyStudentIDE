@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PyStudentIDE.Application\PyStudentIDE.Application.csproj" />
+    <ProjectReference Include="..\PyStudentIDE.Infrastructure\PyStudentIDE.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

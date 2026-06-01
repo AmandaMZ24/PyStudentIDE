@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PyStudentIDE.Application\PyStudentIDE.Application.csproj" />
+    <ProjectReference Include="..\PyStudentIDE.Infrastructure\PyStudentIDE.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
