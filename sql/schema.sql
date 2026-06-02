@@ -3,126 +3,547 @@
 -- Based on Architecture Design Document
 -- ============================================================
 
+
+IF DB_ID('PyStudentIDE') IS NULL
+BEGIN
+    CREATE DATABASE PyStudentIDE;
+END
+GO
+
+USE PyStudentIDE;
+GO
+
+-- ============================================================
+-- Eliminar tablas si ya existen
+-- Se eliminan en orden inverso por las llaves foráneas
+-- ============================================================
+
+DROP TABLE IF EXISTS RESULTADO_PRUEBA;
+DROP TABLE IF EXISTS CASO_PRUEBA;
+DROP TABLE IF EXISTS COMMIT_GIT;
+DROP TABLE IF EXISTS VALIDACION_HASH;
+DROP TABLE IF EXISTS ARCHIVO;
+DROP TABLE IF EXISTS ENTREGA;
+DROP TABLE IF EXISTS ASIGNACION;
+DROP TABLE IF EXISTS MATRICULA;
+DROP TABLE IF EXISTS CURSO;
+DROP TABLE IF EXISTS USUARIO;
+DROP TABLE IF EXISTS ROL;
+GO
+
+-- ============================================================
 -- ROL
+-- ============================================================
+
 CREATE TABLE ROL (
-    id_rol INT PRIMARY KEY IDENTITY(1,1),
-    nombre VARCHAR(50) NOT NULL UNIQUE,
-    descripcion VARCHAR(255)
+    IdRol INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    Descripcion VARCHAR(255)
 );
+GO
 
+-- ============================================================
 -- USUARIO
+-- ============================================================
+
 CREATE TABLE USUARIO (
-    id_usuario INT PRIMARY KEY IDENTITY(1,1),
-    id_rol INT NOT NULL FOREIGN KEY REFERENCES ROL(id_rol),
-    nombre VARCHAR(100) NOT NULL,
-    correo VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    activo BIT NOT NULL DEFAULT 1,
-    fecha_creacion DATETIME NOT NULL DEFAULT GETUTCDATE()
-);
+    IdUsuario INT IDENTITY(1,1) PRIMARY KEY,
+    IdRol INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Correo VARCHAR(150) NOT NULL UNIQUE,
+    PasswordHash VARCHAR(255) NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
+    CONSTRAINT FK_USUARIO_ROL
+        FOREIGN KEY (IdRol) REFERENCES ROL(IdRol)
+);
+GO
+
+-- ============================================================
 -- CURSO
+-- ============================================================
+
 CREATE TABLE CURSO (
-    id_curso INT PRIMARY KEY IDENTITY(1,1),
-    codigo VARCHAR(20) NOT NULL UNIQUE,
-    nombre VARCHAR(100) NOT NULL,
-    periodo VARCHAR(20) NOT NULL,
-    activo BIT NOT NULL DEFAULT 1
+    IdCurso INT IDENTITY(1,1) PRIMARY KEY,
+    Codigo VARCHAR(20) NOT NULL UNIQUE,
+    Nombre VARCHAR(100) NOT NULL,
+    Periodo VARCHAR(50) NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1
 );
+GO
 
+-- ============================================================
 -- MATRICULA
+-- ============================================================
+
 CREATE TABLE MATRICULA (
-    id_matricula INT PRIMARY KEY IDENTITY(1,1),
-    id_usuario INT NOT NULL FOREIGN KEY REFERENCES USUARIO(id_usuario),
-    id_curso INT NOT NULL FOREIGN KEY REFERENCES CURSO(id_curso),
-    tipo_participacion VARCHAR(20) NOT NULL CHECK (tipo_participacion IN ('ESTUDIANTE', 'DOCENTE')),
-    fecha_matricula DATETIME NOT NULL DEFAULT GETUTCDATE(),
-    UNIQUE(id_usuario, id_curso)
-);
+    IdMatricula INT IDENTITY(1,1) PRIMARY KEY,
+    IdUsuario INT NOT NULL,
+    IdCurso INT NOT NULL,
+    TipoParticipacion VARCHAR(20) NOT NULL,
+    FechaMatricula DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
+    CONSTRAINT FK_MATRICULA_USUARIO
+        FOREIGN KEY (IdUsuario) REFERENCES USUARIO(IdUsuario),
+
+    CONSTRAINT FK_MATRICULA_CURSO
+        FOREIGN KEY (IdCurso) REFERENCES CURSO(IdCurso),
+
+    CONSTRAINT UQ_MATRICULA_USUARIO_CURSO
+        UNIQUE (IdUsuario, IdCurso),
+
+    CONSTRAINT CK_MATRICULA_TipoParticipacion
+        CHECK (TipoParticipacion IN ('ESTUDIANTE', 'DOCENTE'))
+);
+GO
+
+-- ============================================================
 -- ASIGNACION
+-- ============================================================
+
 CREATE TABLE ASIGNACION (
-    id_asignacion INT PRIMARY KEY IDENTITY(1,1),
-    id_curso INT NOT NULL FOREIGN KEY REFERENCES CURSO(id_curso),
-    id_docente INT NOT NULL FOREIGN KEY REFERENCES USUARIO(id_usuario),
-    titulo VARCHAR(150) NOT NULL,
-    descripcion TEXT,
-    fecha_publicacion DATETIME NOT NULL,
-    fecha_limite DATETIME NOT NULL,
-    activa BIT NOT NULL DEFAULT 1,
-    admite_trabajo_grupal BIT NOT NULL DEFAULT 0,
-    tamano_maximo_grupo INT,
-    inicio_periodo_prueba DATETIME,
-    fin_periodo_prueba DATETIME
-);
+    IdAsignacion INT IDENTITY(1,1) PRIMARY KEY,
+    IdCurso INT NOT NULL,
+    IdDocente INT NOT NULL,
+    Titulo VARCHAR(150) NOT NULL,
+    Descripcion VARCHAR(MAX),
+    FechaPublicacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaLimite DATETIME2 NOT NULL,
+    Activa BIT NOT NULL DEFAULT 1,
+    AdmiteTrabajoGrupal BIT NOT NULL DEFAULT 0,
+    TamanoMaximoGrupo INT,
+    InicioPeriodoPrueba DATETIME2,
+    FinPeriodoPrueba DATETIME2,
 
+    CONSTRAINT FK_ASIGNACION_CURSO
+        FOREIGN KEY (IdCurso) REFERENCES CURSO(IdCurso),
+
+    CONSTRAINT FK_ASIGNACION_DOCENTE
+        FOREIGN KEY (IdDocente) REFERENCES USUARIO(IdUsuario)
+);
+GO
+
+-- ============================================================
 -- ENTREGA
+-- ============================================================
+
 CREATE TABLE ENTREGA (
-    id_entrega INT PRIMARY KEY IDENTITY(1,1),
-    id_asignacion INT NOT NULL FOREIGN KEY REFERENCES ASIGNACION(id_asignacion),
-    id_estudiante INT NOT NULL FOREIGN KEY REFERENCES USUARIO(id_usuario),
-    fecha_entrega DATETIME NOT NULL DEFAULT GETUTCDATE(),
-    estado VARCHAR(30) NOT NULL CHECK (estado IN ('RECIBIDA', 'VALIDADA', 'RECHAZADA', 'CALIFICADA')),
-    calificacion DECIMAL(5,2) CHECK (calificacion >= 0 AND calificacion <= 100),
-    es_tardia BIT NOT NULL DEFAULT 0,
-    numero_intento INT NOT NULL DEFAULT 1,
-    firma_digital TEXT,
-    UNIQUE(id_asignacion, id_estudiante, numero_intento)
-);
+    IdEntrega INT IDENTITY(1,1) PRIMARY KEY,
+    IdAsignacion INT NOT NULL,
+    IdEstudiante INT NOT NULL,
+    FechaEntrega DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    Estado VARCHAR(30) NOT NULL,
+    Calificacion DECIMAL(5,2),
+    EsTardia BIT NOT NULL DEFAULT 0,
+    NumeroIntento INT NOT NULL DEFAULT 1,
+    FirmaDigital VARCHAR(MAX),
 
+    CONSTRAINT FK_ENTREGA_ASIGNACION
+        FOREIGN KEY (IdAsignacion) REFERENCES ASIGNACION(IdAsignacion),
+
+    CONSTRAINT FK_ENTREGA_ESTUDIANTE
+        FOREIGN KEY (IdEstudiante) REFERENCES USUARIO(IdUsuario),
+
+    CONSTRAINT UQ_ENTREGA_ASIGNACION_ESTUDIANTE_INTENTO
+        UNIQUE (IdAsignacion, IdEstudiante, NumeroIntento),
+
+    CONSTRAINT CK_ENTREGA_Estado
+        CHECK (Estado IN ('RECIBIDA', 'VALIDADA', 'RECHAZADA', 'CALIFICADA')),
+
+    CONSTRAINT CK_ENTREGA_Calificacion
+        CHECK (Calificacion IS NULL OR (Calificacion >= 0 AND Calificacion <= 100))
+);
+GO
+
+-- ============================================================
 -- ARCHIVO
+-- ============================================================
+
 CREATE TABLE ARCHIVO (
-    id_archivo INT PRIMARY KEY IDENTITY(1,1),
-    id_entrega INT NOT NULL FOREIGN KEY REFERENCES ENTREGA(id_entrega),
-    nombre_archivo VARCHAR(150) NOT NULL,
-    ruta_archivo VARCHAR(255) NOT NULL,
-    tipo_archivo VARCHAR(10) NOT NULL DEFAULT '.py',
-    tamano_bytes INT NOT NULL CHECK (tamano_bytes > 0),
-    fecha_carga DATETIME NOT NULL DEFAULT GETUTCDATE(),
-    version_anterior VARCHAR(255)
-);
+    IdArchivo INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    NombreArchivo VARCHAR(150) NOT NULL,
+    RutaArchivo VARCHAR(255) NOT NULL,
+    TipoArchivo VARCHAR(10) NOT NULL DEFAULT '.py',
+    TamanoBytes INT NOT NULL,
+    FechaCarga DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    VersionAnterior VARCHAR(255),
 
+    CONSTRAINT FK_ARCHIVO_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega),
+
+    CONSTRAINT CK_ARCHIVO_TamanoBytes
+        CHECK (TamanoBytes > 0)
+);
+GO
+
+-- ============================================================
 -- VALIDACION_HASH
+-- ============================================================
+
 CREATE TABLE VALIDACION_HASH (
-    id_validacion INT PRIMARY KEY IDENTITY(1,1),
-    id_archivo INT NOT NULL UNIQUE FOREIGN KEY REFERENCES ARCHIVO(id_archivo),
-    algoritmo VARCHAR(20) NOT NULL,
-    hash_calculado CHAR(64) NOT NULL,
-    valido BIT NOT NULL,
-    fecha_validacion DATETIME NOT NULL DEFAULT GETUTCDATE()
-);
+    IdValidacion INT IDENTITY(1,1) PRIMARY KEY,
+    IdArchivo INT NOT NULL UNIQUE,
+    Algoritmo VARCHAR(20) NOT NULL,
+    HashCalculado CHAR(64) NOT NULL,
+    Valido BIT NOT NULL,
+    FechaValidacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
+    CONSTRAINT FK_VALIDACION_HASH_ARCHIVO
+        FOREIGN KEY (IdArchivo) REFERENCES ARCHIVO(IdArchivo)
+);
+GO
+
+-- ============================================================
 -- COMMIT_GIT
+-- ============================================================
+
 CREATE TABLE COMMIT_GIT (
-    id_commit INT PRIMARY KEY IDENTITY(1,1),
-    id_entrega INT NOT NULL FOREIGN KEY REFERENCES ENTREGA(id_entrega),
-    hash_commit VARCHAR(40) NOT NULL UNIQUE,
-    mensaje VARCHAR(255),
-    rama VARCHAR(100) NOT NULL DEFAULT 'main',
-    fecha_commit DATETIME NOT NULL
-);
+    IdCommit INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    HashCommit VARCHAR(40) NOT NULL UNIQUE,
+    Mensaje VARCHAR(255),
+    Rama VARCHAR(100) NOT NULL DEFAULT 'main',
+    FechaCommit DATETIME2 NOT NULL,
 
+    CONSTRAINT FK_COMMIT_GIT_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega)
+);
+GO
+
+-- ============================================================
 -- CASO_PRUEBA
-CREATE TABLE CASO_PRUEBA (
-    id_caso_prueba INT PRIMARY KEY IDENTITY(1,1),
-    id_asignacion INT NOT NULL FOREIGN KEY REFERENCES ASIGNACION(id_asignacion),
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    entrada TEXT,
-    salida_esperada TEXT NOT NULL,
-    puntaje INT CHECK (puntaje >= 0),
-    activo BIT NOT NULL DEFAULT 1
-);
+-- ============================================================
 
--- RESULTADO_PRUEBA
-CREATE TABLE RESULTADO_PRUEBA (
-    id_resultado INT PRIMARY KEY IDENTITY(1,1),
-    id_entrega INT NOT NULL FOREIGN KEY REFERENCES ENTREGA(id_entrega),
-    id_caso_prueba INT NOT NULL FOREIGN KEY REFERENCES CASO_PRUEBA(id_caso_prueba),
-    aprobado BIT NOT NULL,
-    salida_obtenida TEXT,
-    mensaje_error TEXT,
-    tiempo_ejecucion DECIMAL(8,3) CHECK (tiempo_ejecucion >= 0),
-    fecha_ejecucion DATETIME NOT NULL DEFAULT GETUTCDATE(),
-    UNIQUE(id_entrega, id_caso_prueba)
+CREATE TABLE CASO_PRUEBA (
+    IdCasoPrueba INT IDENTITY(1,1) PRIMARY KEY,
+    IdAsignacion INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion VARCHAR(MAX),
+    Entrada VARCHAR(MAX),
+    SalidaEsperada VARCHAR(MAX) NOT NULL,
+    Puntaje INT,
+    Activo BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_CASO_PRUEBA_ASIGNACION
+        FOREIGN KEY (IdAsignacion) REFERENCES ASIGNACION(IdAsignacion),
+
+    CONSTRAINT CK_CASO_PRUEBA_Puntaje
+        CHECK (Puntaje IS NULL OR Puntaje >= 0)
 );
+GO
+
+-- ============================================================
+-- RESULTADO_PRUEBA
+-- ============================================================
+
+CREATE TABLE RESULTADO_PRUEBA (
+    IdResultado INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    IdCasoPrueba INT NOT NULL,
+    Aprobado BIT NOT NULL,
+    SalidaObtenida VARCHAR(MAX),
+    MensajeError VARCHAR(MAX),
+    TiempoEjecucion DECIMAL(8,3),
+    FechaEjecucion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_RESULTADO_PRUEBA_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega),
+
+    CONSTRAINT FK_RESULTADO_PRUEBA_CASO_PRUEBA
+        FOREIGN KEY (IdCasoPrueba) REFERENCES CASO_PRUEBA(IdCasoPrueba),
+
+    CONSTRAINT UQ_RESULTADO_PRUEBA_ENTREGA_CASO
+        UNIQUE (IdEntrega, IdCasoPrueba),
+
+    CONSTRAINT CK_RESULTADO_PRUEBA_TiempoEjecucion
+        CHECK (TiempoEjecucion IS NULL OR TiempoEjecucion >= 0)
+);
+GO
+
+-- ============================================================
+-- Datos iniciales
+-- ============================================================
+
+INSERT INTO ROL (Nombre, Descripcion)
+VALUES 
+('DOCENTE', 'Usuario docente del sistema'),
+('ESTUDIANTE', 'Usuario estudiante del sistema');
+GO
+
+-- ============================================================
+-- Fin del script
+-- ============================================================
+
+IF DB_ID('PyStudentIDE') IS NULL
+BEGIN
+    CREATE DATABASE PyStudentIDE;
+END
+GO
+
+USE PyStudentIDE;
+GO
+
+-- ============================================================
+-- Eliminar tablas si ya existen
+-- Se eliminan en orden inverso por las llaves foráneas
+-- ============================================================
+
+DROP TABLE IF EXISTS RESULTADO_PRUEBA;
+DROP TABLE IF EXISTS CASO_PRUEBA;
+DROP TABLE IF EXISTS COMMIT_GIT;
+DROP TABLE IF EXISTS VALIDACION_HASH;
+DROP TABLE IF EXISTS ARCHIVO;
+DROP TABLE IF EXISTS ENTREGA;
+DROP TABLE IF EXISTS ASIGNACION;
+DROP TABLE IF EXISTS MATRICULA;
+DROP TABLE IF EXISTS CURSO;
+DROP TABLE IF EXISTS USUARIO;
+DROP TABLE IF EXISTS ROL;
+GO
+
+-- ============================================================
+-- ROL
+-- ============================================================
+
+CREATE TABLE ROL (
+    IdRol INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    Descripcion VARCHAR(255)
+);
+GO
+
+-- ============================================================
+-- USUARIO
+-- ============================================================
+
+CREATE TABLE USUARIO (
+    IdUsuario INT IDENTITY(1,1) PRIMARY KEY,
+    IdRol INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Correo VARCHAR(150) NOT NULL UNIQUE,
+    PasswordHash VARCHAR(255) NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_USUARIO_ROL
+        FOREIGN KEY (IdRol) REFERENCES ROL(IdRol)
+);
+GO
+
+-- ============================================================
+-- CURSO
+-- ============================================================
+
+CREATE TABLE CURSO (
+    IdCurso INT IDENTITY(1,1) PRIMARY KEY,
+    Codigo VARCHAR(20) NOT NULL UNIQUE,
+    Nombre VARCHAR(100) NOT NULL,
+    Periodo VARCHAR(50) NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1
+);
+GO
+
+-- ============================================================
+-- MATRICULA
+-- ============================================================
+
+CREATE TABLE MATRICULA (
+    IdMatricula INT IDENTITY(1,1) PRIMARY KEY,
+    IdUsuario INT NOT NULL,
+    IdCurso INT NOT NULL,
+    TipoParticipacion VARCHAR(20) NOT NULL,
+    FechaMatricula DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_MATRICULA_USUARIO
+        FOREIGN KEY (IdUsuario) REFERENCES USUARIO(IdUsuario),
+
+    CONSTRAINT FK_MATRICULA_CURSO
+        FOREIGN KEY (IdCurso) REFERENCES CURSO(IdCurso),
+
+    CONSTRAINT UQ_MATRICULA_USUARIO_CURSO
+        UNIQUE (IdUsuario, IdCurso),
+
+    CONSTRAINT CK_MATRICULA_TipoParticipacion
+        CHECK (TipoParticipacion IN ('ESTUDIANTE', 'DOCENTE'))
+);
+GO
+
+-- ============================================================
+-- ASIGNACION
+-- ============================================================
+
+CREATE TABLE ASIGNACION (
+    IdAsignacion INT IDENTITY(1,1) PRIMARY KEY,
+    IdCurso INT NOT NULL,
+    IdDocente INT NOT NULL,
+    Titulo VARCHAR(150) NOT NULL,
+    Descripcion VARCHAR(MAX),
+    FechaPublicacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaLimite DATETIME2 NOT NULL,
+    Activa BIT NOT NULL DEFAULT 1,
+    AdmiteTrabajoGrupal BIT NOT NULL DEFAULT 0,
+    TamanoMaximoGrupo INT,
+    InicioPeriodoPrueba DATETIME2,
+    FinPeriodoPrueba DATETIME2,
+
+    CONSTRAINT FK_ASIGNACION_CURSO
+        FOREIGN KEY (IdCurso) REFERENCES CURSO(IdCurso),
+
+    CONSTRAINT FK_ASIGNACION_DOCENTE
+        FOREIGN KEY (IdDocente) REFERENCES USUARIO(IdUsuario)
+);
+GO
+
+-- ============================================================
+-- ENTREGA
+-- ============================================================
+
+CREATE TABLE ENTREGA (
+    IdEntrega INT IDENTITY(1,1) PRIMARY KEY,
+    IdAsignacion INT NOT NULL,
+    IdEstudiante INT NOT NULL,
+    FechaEntrega DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    Estado VARCHAR(30) NOT NULL,
+    Calificacion DECIMAL(5,2),
+    EsTardia BIT NOT NULL DEFAULT 0,
+    NumeroIntento INT NOT NULL DEFAULT 1,
+    FirmaDigital VARCHAR(MAX),
+
+    CONSTRAINT FK_ENTREGA_ASIGNACION
+        FOREIGN KEY (IdAsignacion) REFERENCES ASIGNACION(IdAsignacion),
+
+    CONSTRAINT FK_ENTREGA_ESTUDIANTE
+        FOREIGN KEY (IdEstudiante) REFERENCES USUARIO(IdUsuario),
+
+    CONSTRAINT UQ_ENTREGA_ASIGNACION_ESTUDIANTE_INTENTO
+        UNIQUE (IdAsignacion, IdEstudiante, NumeroIntento),
+
+    CONSTRAINT CK_ENTREGA_Estado
+        CHECK (Estado IN ('RECIBIDA', 'VALIDADA', 'RECHAZADA', 'CALIFICADA')),
+
+    CONSTRAINT CK_ENTREGA_Calificacion
+        CHECK (Calificacion IS NULL OR (Calificacion >= 0 AND Calificacion <= 100))
+);
+GO
+
+-- ============================================================
+-- ARCHIVO
+-- ============================================================
+
+CREATE TABLE ARCHIVO (
+    IdArchivo INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    NombreArchivo VARCHAR(150) NOT NULL,
+    RutaArchivo VARCHAR(255) NOT NULL,
+    TipoArchivo VARCHAR(10) NOT NULL DEFAULT '.py',
+    TamanoBytes INT NOT NULL,
+    FechaCarga DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    VersionAnterior VARCHAR(255),
+
+    CONSTRAINT FK_ARCHIVO_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega),
+
+    CONSTRAINT CK_ARCHIVO_TamanoBytes
+        CHECK (TamanoBytes > 0)
+);
+GO
+
+-- ============================================================
+-- VALIDACION_HASH
+-- ============================================================
+
+CREATE TABLE VALIDACION_HASH (
+    IdValidacion INT IDENTITY(1,1) PRIMARY KEY,
+    IdArchivo INT NOT NULL UNIQUE,
+    Algoritmo VARCHAR(20) NOT NULL,
+    HashCalculado CHAR(64) NOT NULL,
+    Valido BIT NOT NULL,
+    FechaValidacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_VALIDACION_HASH_ARCHIVO
+        FOREIGN KEY (IdArchivo) REFERENCES ARCHIVO(IdArchivo)
+);
+GO
+
+-- ============================================================
+-- COMMIT_GIT
+-- ============================================================
+
+CREATE TABLE COMMIT_GIT (
+    IdCommit INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    HashCommit VARCHAR(40) NOT NULL UNIQUE,
+    Mensaje VARCHAR(255),
+    Rama VARCHAR(100) NOT NULL DEFAULT 'main',
+    FechaCommit DATETIME2 NOT NULL,
+
+    CONSTRAINT FK_COMMIT_GIT_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega)
+);
+GO
+
+-- ============================================================
+-- CASO_PRUEBA
+-- ============================================================
+
+CREATE TABLE CASO_PRUEBA (
+    IdCasoPrueba INT IDENTITY(1,1) PRIMARY KEY,
+    IdAsignacion INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion VARCHAR(MAX),
+    Entrada VARCHAR(MAX),
+    SalidaEsperada VARCHAR(MAX) NOT NULL,
+    Puntaje INT,
+    Activo BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_CASO_PRUEBA_ASIGNACION
+        FOREIGN KEY (IdAsignacion) REFERENCES ASIGNACION(IdAsignacion),
+
+    CONSTRAINT CK_CASO_PRUEBA_Puntaje
+        CHECK (Puntaje IS NULL OR Puntaje >= 0)
+);
+GO
+
+-- ============================================================
+-- RESULTADO_PRUEBA
+-- ============================================================
+
+CREATE TABLE RESULTADO_PRUEBA (
+    IdResultado INT IDENTITY(1,1) PRIMARY KEY,
+    IdEntrega INT NOT NULL,
+    IdCasoPrueba INT NOT NULL,
+    Aprobado BIT NOT NULL,
+    SalidaObtenida VARCHAR(MAX),
+    MensajeError VARCHAR(MAX),
+    TiempoEjecucion DECIMAL(8,3),
+    FechaEjecucion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT FK_RESULTADO_PRUEBA_ENTREGA
+        FOREIGN KEY (IdEntrega) REFERENCES ENTREGA(IdEntrega),
+
+    CONSTRAINT FK_RESULTADO_PRUEBA_CASO_PRUEBA
+        FOREIGN KEY (IdCasoPrueba) REFERENCES CASO_PRUEBA(IdCasoPrueba),
+
+    CONSTRAINT UQ_RESULTADO_PRUEBA_ENTREGA_CASO
+        UNIQUE (IdEntrega, IdCasoPrueba),
+
+    CONSTRAINT CK_RESULTADO_PRUEBA_TiempoEjecucion
+        CHECK (TiempoEjecucion IS NULL OR TiempoEjecucion >= 0)
+);
+GO
+
+-- ============================================================
+-- Datos iniciales
+-- ============================================================
+
+INSERT INTO ROL (Nombre, Descripcion)
+VALUES 
+('DOCENTE', 'Usuario docente del sistema'),
+('ESTUDIANTE', 'Usuario estudiante del sistema');
+GO
+
+-- ============================================================
+-- Fin del script
+-- ============================================================
