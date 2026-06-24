@@ -1,5 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using PyStudentIDE.Application.DTOs;
 using PyStudentIDE.Application.Interfaces;
 using PyStudentIDE.Domain.Entities;
@@ -30,7 +33,7 @@ public class AuthService : IAuthService
             .FirstOrDefault(r => r.IdRol == user.IdRol);
         var roleName = role?.Nombre ?? "ESTUDIANTE";
 
-        var token = GenerateToken(user, roleName);
+        var token = GenerateJwtToken(user, roleName);
 
         return new LoginResponse
         {
@@ -64,7 +67,7 @@ public class AuthService : IAuthService
             .FirstOrDefault(r => r.IdRol == user.IdRol);
         var roleName = role?.Nombre ?? "ESTUDIANTE";
 
-        var token = GenerateToken(user, roleName);
+        var token = GenerateJwtToken(user, roleName);
 
         return new LoginResponse
         {
@@ -79,20 +82,18 @@ public class AuthService : IAuthService
     {
         try
         {
-            var bytes = Convert.FromBase64String(token);
-            var decoded = Encoding.UTF8.GetString(bytes);
-            var parts = decoded.Split('|');
-            if (parts.Length != 5) return false;
-
-            var payload = $"{parts[0]}|{parts[1]}|{parts[2]}|{parts[3]}";
-            var expectedHmac = ComputeHMAC(payload);
-
-            if (!string.Equals(parts[4], expectedHmac, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            var expirationTicks = long.Parse(parts[3]);
-            var expiration = new DateTime(expirationTicks, DateTimeKind.Utc);
-            return expiration > DateTime.UtcNow;
+            var keyBytes = Encoding.UTF8.GetBytes(_secretKey);
+            var handler = new JwtSecurityTokenHandler();
+            var result = handler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
+            return result != null;
         }
         catch
         {
@@ -100,22 +101,27 @@ public class AuthService : IAuthService
         }
     }
 
-    private string GenerateToken(Usuario user, string roleName)
-    {
-        var expiration = DateTime.UtcNow.AddHours(8);
-        var payload = $"{user.IdUsuario}|{user.Correo}|{roleName}|{expiration.Ticks}";
-        var hmac = ComputeHMAC(payload);
-        var tokenString = $"{payload}|{hmac}";
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenString));
-    }
-
-    private string ComputeHMAC(string data)
+    private string GenerateJwtToken(Usuario user, string roleName)
     {
         var keyBytes = Encoding.UTF8.GetBytes(_secretKey);
-        var dataBytes = Encoding.UTF8.GetBytes(data);
-        using var hmac = new HMACSHA256(keyBytes);
-        var hash = hmac.ComputeHash(dataBytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        var key = new SymmetricSecurityKey(keyBytes);
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.IdUsuario.ToString()),
+            new Claim(ClaimTypes.Email, user.Correo),
+            new Claim(ClaimTypes.Name, user.Nombre),
+            new Claim(ClaimTypes.Role, roleName)
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(8),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private static string ComputeSHA256(string input)

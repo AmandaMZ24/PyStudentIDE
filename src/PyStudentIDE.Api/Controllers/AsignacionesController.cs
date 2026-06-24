@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PyStudentIDE.Application.DTOs;
 using PyStudentIDE.Application.Services;
@@ -5,6 +7,7 @@ using PyStudentIDE.Application.Services;
 namespace PyStudentIDE.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class AsignacionesController : ControllerBase
 {
@@ -13,8 +16,9 @@ public class AsignacionesController : ControllerBase
     public AsignacionesController(IAssignmentService assignmentService) { _assignmentService = assignmentService; }
 
     [HttpPost]
-    public IActionResult Create([FromBody] AssignmentDTO dto, [FromHeader] int docenteId)
+    public IActionResult Create([FromBody] AssignmentDTO dto)
     {
+        var docenteId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var id = _assignmentService.CreateAssignment(dto, docenteId);
         return Ok(new { id });
     }

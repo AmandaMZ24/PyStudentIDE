@@ -38,7 +38,10 @@ public class AuthServiceDecorator : IAuthService
         try
         {
             var result = _inner.Register(request);
-            _logger.Log(new LogEntry { Level = LogLevel.Info, Category = "AUTH", Message = $"Registro exitoso: {request.Email}", Metadata = $"UserId={result!.UsuarioId}" });
+            if (result != null)
+                _logger.Log(new LogEntry { Level = LogLevel.Info, Category = "AUTH", Message = $"Registro exitoso: {request.Email}", Metadata = $"UserId={result.UsuarioId}" });
+            else
+                _logger.Log(new LogEntry { Level = LogLevel.Warning, Category = "AUTH", Message = $"Registro fallido (email duplicado): {request.Email}" });
             return result!;
         }
         catch (Exception ex)

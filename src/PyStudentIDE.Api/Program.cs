@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PyStudentIDE.Application.Facade;
 using PyStudentIDE.Application.Interfaces;
 using PyStudentIDE.Application.Services;
@@ -24,12 +27,40 @@ builder.Services.AddSingleton(sp =>
 });
 builder.Services.AddScoped<IGitAdapter, GitAdapter>();
 
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "DefaultSecretKey_2026_PyStudentIDE!";
+var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtSecretKey);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Estudiante", policy => policy.RequireRole("ESTUDIANTE"));
+    options.AddPolicy("Docente", policy => policy.RequireRole("DOCENTE"));
+    options.AddPolicy("EstudianteOrDocente", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("ESTUDIANTE") || context.User.IsInRole("DOCENTE")));
+});
+
 builder.Services.AddScoped<IAuthService>(sp =>
 {
     var unitOfWork = sp.GetRequiredService<IUnitOfWork>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var secretKey = config["Jwt:SecretKey"] ?? "DefaultSecretKey_2026_PyStudentIDE!";
-    var inner = new AuthService(unitOfWork, secretKey);
+    var inner = new AuthService(unitOfWork, jwtSecretKey);
     var logger = sp.GetRequiredService<EventLogger>();
     return new AuthServiceDecorator(inner, logger);
 });
@@ -43,6 +74,9 @@ builder.Services.AddScoped<IAssignmentService>(sp =>
 });
 
 builder.Services.AddScoped<ITestEngine, TestEngineService>();
+builder.Services.AddScoped<ILlaveCursoService, LlaveCursoService>();
+builder.Services.AddScoped<IGitService, GitService>();
+builder.Services.AddScoped<IRetroalimentacionService, RetroalimentacionService>();
 builder.Services.AddScoped<PyStudentFacade>();
 
 builder.Services.AddControllers();
@@ -67,6 +101,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapGet("/", () => Results.Ok(new
 {
     status = "ok",

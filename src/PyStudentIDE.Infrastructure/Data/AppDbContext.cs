@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<CommitGit> CommitsGit => Set<CommitGit>();
     public DbSet<CasoPrueba> CasosPrueba => Set<CasoPrueba>();
     public DbSet<ResultadoPrueba> ResultadosPrueba => Set<ResultadoPrueba>();
+    public DbSet<LlaveCurso> LlavesCurso => Set<LlaveCurso>();
+    public DbSet<Retroalimentacion> Retroalimentaciones => Set<Retroalimentacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -111,6 +113,23 @@ public class AppDbContext : DbContext
             e.HasKey(r => r.IdResultado);
             e.Property(r => r.TiempoEjecucion).HasColumnType("DECIMAL(8,3)");
             e.HasIndex(r => new { r.IdEntrega, r.IdCasoPrueba }).IsUnique();
+        });
+
+        modelBuilder.Entity<LlaveCurso>(e =>
+        {
+            e.ToTable("LLAVE_CURSO");
+            e.HasKey(l => l.IdLlave);
+            e.Property(l => l.LlavePublicaXml).IsRequired();
+            e.Property(l => l.Algoritmo).HasMaxLength(30).IsRequired();
+            e.HasIndex(l => new { l.IdCurso, l.Activa });
+        });
+
+        modelBuilder.Entity<Retroalimentacion>(e =>
+        {
+            e.ToTable("RETROALIMENTACION");
+            e.HasKey(r => r.IdRetroalimentacion);
+            e.Property(r => r.Comentario).IsRequired();
+            e.Property(r => r.Calificacion).HasColumnType("DECIMAL(5,2)");
         });
     }
 }

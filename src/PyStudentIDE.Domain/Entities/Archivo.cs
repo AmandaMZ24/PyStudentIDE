@@ -7,7 +7,8 @@ public class Archivo
     public string NombreArchivo { get; set; } = string.Empty;
     public string RutaArchivo { get; set; } = string.Empty;
     public string TipoArchivo { get; set; } = string.Empty;
-    public int TamanioBytes { get; set; }
+    public int TamanoBytes { get; set; }
     public DateTime FechaCarga { get; set; }
     public string? VersionAnterior { get; set; }
+    public string? Contenido { get; set; }
 }

@@ -7,11 +7,17 @@ namespace PyStudentIDE.UI.Controls;
 public partial class TerminalControl : UserControl
 {
     private Process? _pythonProcess;
+    private string? _currentRepoPath;
 
     public TerminalControl()
     {
         InitializeComponent();
         StartPythonRepl();
+    }
+
+    public void SetRepoPath(string repoPath)
+    {
+        _currentRepoPath = repoPath;
     }
 
     private void StartPythonRepl()
@@ -75,10 +81,70 @@ public partial class TerminalControl : UserControl
     private void ExecuteCommand(string command)
     {
         AppendOutput($">>> {command}\n");
+
+        if (command.StartsWith("git ", StringComparison.OrdinalIgnoreCase))
+        {
+            ExecuteGitCommand(command);
+            return;
+        }
+
         if (_pythonProcess != null && !_pythonProcess.HasExited)
         {
             _pythonProcess.StandardInput.WriteLine(command);
             _pythonProcess.StandardInput.Flush();
         }
+        else
+        {
+            AppendOutput("Python REPL no está disponible. Use 'git' para comandos de control de versiones.\n");
+        }
+    }
+
+    private void ExecuteGitCommand(string command)
+    {
+        var args = command.Length > 4 ? command[4..] : "";
+        var repoPath = _currentRepoPath ?? Environment.CurrentDirectory;
+
+        try
+        {
+            var psi = new ProcessStartInfo("git", args)
+            {
+                WorkingDirectory = repoPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                AppendOutput("Error: No se pudo iniciar Git\n");
+                return;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            process.WaitForExit(30000);
+
+            if (!string.IsNullOrEmpty(output))
+                AppendOutput(output);
+            if (!string.IsNullOrEmpty(error))
+                AppendOutput($"ERROR: {error}\n");
+            AppendOutput($"> Git finalizado (código: {process.ExitCode})\n");
+        }
+        catch (Exception ex)
+        {
+            AppendOutput($"Error al ejecutar Git: {ex.Message}\n");
+        }
+    }
+
+    public void Stop()
+    {
+        try
+        {
+            _pythonProcess?.Kill();
+            _pythonProcess?.Dispose();
+        }
+        catch { }
     }
 }

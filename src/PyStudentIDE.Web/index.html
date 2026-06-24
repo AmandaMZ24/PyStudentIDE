@@ -92,6 +92,54 @@
       </section>
 
       <section class="card">
+        <h2>Entregar Tarea</h2>
+        <div class="grid">
+          <label>Asignación ID <input id="deliveryAsigId" type="number" /></label>
+          <label>Estudiante ID <input id="deliveryUserId" type="number" /></label>
+          <label>Archivo (Base64) <input id="deliveryContent" type="text" placeholder="Contenido en Base64" /></label>
+          <label>Ruta <input id="deliveryPath" type="text" value="main.py" /></label>
+          <button id="btnSubmitDelivery">Entregar</button>
+        </div>
+        <div class="grid">
+          <label>Re-entrega (entrega anterior ID) <input id="resubmitId" type="number" /></label>
+          <button id="btnResubmitDelivery">Re-entregar</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Pruebas Automáticas</h2>
+        <div class="grid">
+          <label>Asignación ID <input id="testAsigId" type="number" /></label>
+          <label>Entrega ID <input id="testEntregaId" type="number" /></label>
+          <label>Ruta archivo <input id="testFilePath" type="text" value="main.py" /></label>
+          <button id="btnRunTests">Ejecutar Pruebas</button>
+        </div>
+        <pre id="testResults"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Git</h2>
+        <div class="grid">
+          <label>Curso ID <input id="gitCursoId" type="number" /></label>
+          <label>Ruta repositorio <input id="gitRepoPath" type="text" value="C:\repo" /></label>
+          <button id="btnGitInit">Init</button>
+          <button id="btnGitStatus">Status</button>
+          <button id="btnGitLog">Log</button>
+        </div>
+        <div class="grid">
+          <label>Mensaje commit <input id="gitCommitMsg" type="text" value="Avance" /></label>
+          <button id="btnGitAdd">Add</button>
+          <button id="btnGitCommit">Commit</button>
+        </div>
+        <div class="grid">
+          <label>URL remoto <input id="gitRemoteUrl" type="text" /></label>
+          <button id="btnGitPull">Pull</button>
+          <button id="btnGitPush">Push</button>
+        </div>
+        <pre id="gitOutput"></pre>
+      </section>
+
+      <section class="card">
         <h2>Bitácora</h2>
         <pre id="log"></pre>
       </section>

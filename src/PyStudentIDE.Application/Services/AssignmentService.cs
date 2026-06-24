@@ -80,6 +80,12 @@ public class AssignmentService : IAssignmentService
         if (asignacion == null)
             return new DeliveryResultDTO { Exitoso = false, Mensaje = "Asignación no encontrada" };
 
+        if (!asignacion.Activa)
+            return new DeliveryResultDTO { Exitoso = false, Mensaje = "La asignación no está activa" };
+
+        if (EstaEnPeriodoPrueba(asignacion))
+            return new DeliveryResultDTO { Exitoso = false, Mensaje = "La entrega no está habilitada durante el período de prueba. Espere al período oficial de entrega." };
+
         var esTardia = DateTime.UtcNow > asignacion.FechaLimite;
 
         var entrega = new Entrega
@@ -103,8 +109,9 @@ public class AssignmentService : IAssignmentService
             NombreArchivo = Path.GetFileName(dto.RutaArchivo),
             RutaArchivo = dto.RutaArchivo,
             TipoArchivo = Path.GetExtension(dto.RutaArchivo).TrimStart('.'),
-            TamanioBytes = fileBytes.Length,
-            FechaCarga = DateTime.UtcNow
+            TamanoBytes = fileBytes.Length,
+            FechaCarga = DateTime.UtcNow,
+            Contenido = dto.ContenidoBase64
         };
 
         _unitOfWork.Repository<Archivo>().Add(archivo);
@@ -132,6 +139,7 @@ public class AssignmentService : IAssignmentService
         {
             Exitoso = true,
             Mensaje = "Entrega registrada exitosamente",
+            IdEntrega = entrega.IdEntrega,
             FirmaDigital = hash,
             Timestamp = entrega.FechaEntrega,
             EsTardia = esTardia
@@ -147,7 +155,27 @@ public class AssignmentService : IAssignmentService
         if (asignacion == null)
             return new DeliveryResultDTO { Exitoso = false, Mensaje = "Asignación no encontrada" };
 
+        if (!asignacion.Activa)
+            return new DeliveryResultDTO { Exitoso = false, Mensaje = "La asignación no está activa" };
+
+        if (EstaEnPeriodoPrueba(asignacion))
+            return new DeliveryResultDTO { Exitoso = false, Mensaje = "No se puede re-entregar durante el período de prueba" };
+
         var esTardia = DateTime.UtcNow > asignacion.FechaLimite;
+
+        if (entregaAnterior != null && intento == 1)
+        {
+            var archivosOriginales = _unitOfWork.Repository<Archivo>().GetAll()
+                .Where(a => a.IdEntrega == entregaAnteriorId)
+                .ToList();
+
+            foreach (var archivoOrig in archivosOriginales)
+            {
+                archivoOrig.VersionAnterior = $"SNAPSHOT_{entregaAnterior.FechaEntrega:yyyyMMddHHmmss}";
+                _unitOfWork.Repository<Archivo>().Update(archivoOrig);
+            }
+            _unitOfWork.SaveChanges();
+        }
 
         var entrega = new Entrega
         {
@@ -170,9 +198,10 @@ public class AssignmentService : IAssignmentService
             NombreArchivo = Path.GetFileName(dto.RutaArchivo),
             RutaArchivo = dto.RutaArchivo,
             TipoArchivo = Path.GetExtension(dto.RutaArchivo).TrimStart('.'),
-            TamanioBytes = fileBytes.Length,
+            TamanoBytes = fileBytes.Length,
             FechaCarga = DateTime.UtcNow,
-            VersionAnterior = entregaAnterior?.FirmaDigital
+            VersionAnterior = entregaAnterior?.FirmaDigital,
+            Contenido = dto.ContenidoBase64
         };
 
         _unitOfWork.Repository<Archivo>().Add(archivo);
@@ -200,6 +229,7 @@ public class AssignmentService : IAssignmentService
         {
             Exitoso = true,
             Mensaje = $"Re-entrega registrada (intento {intento + 1})",
+            IdEntrega = entrega.IdEntrega,
             FirmaDigital = hash,
             Timestamp = entrega.FechaEntrega,
             EsTardia = esTardia
@@ -244,6 +274,91 @@ public class AssignmentService : IAssignmentService
                     TipoParticipacion = m.TipoParticipacion
                 })
             .ToList();
+    }
+
+    public IEnumerable<DeliveryDTO> GetDeliveriesByAssignment(int asignacionId, int estudianteId)
+    {
+        return _unitOfWork.Repository<Entrega>().GetAll()
+            .Where(e => e.IdAsignacion == asignacionId && e.IdEstudiante == estudianteId)
+            .Select(e => new DeliveryDTO
+            {
+                IdAsignacion = e.IdAsignacion,
+                IdEstudiante = e.IdEstudiante,
+                RutaArchivo = $"entrega_{e.NumeroIntento}.py",
+                ContenidoBase64 = e.FirmaDigital ?? string.Empty
+            })
+            .ToList();
+    }
+
+    public IEnumerable<DeliveryResponse> GetDeliveriesByStudent(int estudianteId)
+    {
+        return _unitOfWork.Repository<Entrega>().GetAll()
+            .Where(e => e.IdEstudiante == estudianteId)
+            .Select(e => new DeliveryResponse
+            {
+                IdEntrega = e.IdEntrega,
+                IdAsignacion = e.IdAsignacion,
+                IdEstudiante = e.IdEstudiante,
+                FechaEntrega = e.FechaEntrega,
+                Estado = e.Estado,
+                Calificacion = e.Calificacion,
+                EsTardia = e.EsTardia,
+                NumeroIntento = e.NumeroIntento,
+                FirmaDigital = e.FirmaDigital
+            })
+            .ToList();
+    }
+
+    public IEnumerable<UsuarioResponse> GetStudentsByCourse(int cursoId)
+    {
+        return _unitOfWork.Repository<Matricula>().GetAll()
+            .Where(m => m.IdCurso == cursoId && m.TipoParticipacion == "ESTUDIANTE")
+            .Join(_unitOfWork.Repository<Usuario>().GetAll(),
+                m => m.IdUsuario,
+                u => u.IdUsuario,
+                (m, u) => new UsuarioResponse
+                {
+                    IdUsuario = u.IdUsuario,
+                    Nombre = u.Nombre,
+                    Correo = u.Correo,
+                    IdRol = u.IdRol
+                })
+            .ToList();
+    }
+
+    public IEnumerable<DeliveryResponse> GetDeliveriesByAssignmentAll(int asignacionId)
+    {
+        return _unitOfWork.Repository<Entrega>().GetAll()
+            .Where(e => e.IdAsignacion == asignacionId)
+            .Select(e => new DeliveryResponse
+            {
+                IdEntrega = e.IdEntrega,
+                IdAsignacion = e.IdAsignacion,
+                IdEstudiante = e.IdEstudiante,
+                FechaEntrega = e.FechaEntrega,
+                Estado = e.Estado,
+                Calificacion = e.Calificacion,
+                EsTardia = e.EsTardia,
+                NumeroIntento = e.NumeroIntento,
+                FirmaDigital = e.FirmaDigital
+            })
+            .ToList();
+    }
+
+    public string? GetDeliveryFileContent(int entregaId)
+    {
+        var archivo = _unitOfWork.Repository<Archivo>().GetAll()
+            .FirstOrDefault(a => a.IdEntrega == entregaId);
+        return archivo?.Contenido;
+    }
+
+    private static bool EstaEnPeriodoPrueba(Asignacion asignacion)
+    {
+        var ahora = DateTime.UtcNow;
+        return asignacion.InicioPeriodoPrueba.HasValue
+            && asignacion.FinPeriodoPrueba.HasValue
+            && ahora >= asignacion.InicioPeriodoPrueba.Value
+            && ahora < asignacion.FinPeriodoPrueba.Value;
     }
 
     private static string ComputeSHA256(byte[] content)

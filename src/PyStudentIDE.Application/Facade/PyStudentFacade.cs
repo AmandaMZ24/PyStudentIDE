@@ -11,6 +11,8 @@ public class PyStudentFacade
     private readonly IAssignmentService _assignmentService;
     private readonly ITestEngine _testEngine;
     private readonly IHashService _hashService;
+    private readonly ILlaveCursoService _llaveCursoService;
+    private readonly IGitService _gitService;
     private readonly IUnitOfWork _unitOfWork;
 
     public PyStudentFacade(
@@ -18,12 +20,16 @@ public class PyStudentFacade
         IAssignmentService assignmentService,
         ITestEngine testEngine,
         IHashService hashService,
+        ILlaveCursoService llaveCursoService,
+        IGitService gitService,
         IUnitOfWork unitOfWork)
     {
         _authService = authService;
         _assignmentService = assignmentService;
         _testEngine = testEngine;
         _hashService = hashService;
+        _llaveCursoService = llaveCursoService;
+        _gitService = gitService;
         _unitOfWork = unitOfWork;
     }
 
@@ -103,4 +109,46 @@ public class PyStudentFacade
 
     public IEnumerable<TestResult> RunTests(int assignmentId, int entregaId, string filePath) =>
         _testEngine.ExecuteTests(assignmentId, entregaId, filePath);
+
+    public GenerarLlaveResponse GenerarLlaveCurso(int idCurso) =>
+        _llaveCursoService.GenerarLlave(idCurso);
+
+    public int RegistrarLlaveCurso(RegistrarLlaveRequest request) =>
+        _llaveCursoService.RegistrarLlave(request);
+
+    public LlaveCursoResponse? ObtenerLlaveActiva(int idCurso) =>
+        _llaveCursoService.ObtenerLlaveActiva(idCurso);
+
+    public void DesactivarLlave(int idLlave) =>
+        _llaveCursoService.DesactivarLlave(idLlave);
+
+    public string GitInit(int cursoId, string repoPath) =>
+        _gitService.Init(cursoId, repoPath);
+
+    public string GitClone(int cursoId, string url, string localPath) =>
+        _gitService.Clone(cursoId, url, localPath);
+
+    public string GitAdd(int cursoId, string repoPath, string filePattern) =>
+        _gitService.Add(cursoId, repoPath, filePattern);
+
+    public string GitCommit(int cursoId, string repoPath, string message, int entregaId = 0) =>
+        _gitService.Commit(cursoId, repoPath, message, entregaId);
+
+    public string GitPush(int cursoId, string repoPath) =>
+        _gitService.Push(cursoId, repoPath);
+
+    public string GitPull(int cursoId, string repoPath) =>
+        _gitService.Pull(cursoId, repoPath);
+
+    public string GitStatus(int cursoId, string repoPath) =>
+        _gitService.Status(cursoId, repoPath);
+
+    public string GitLog(int cursoId, string repoPath) =>
+        _gitService.Log(cursoId, repoPath);
+
+    public IEnumerable<UsuarioResponse> GetStudentsByCourse(int cursoId) =>
+        _assignmentService.GetStudentsByCourse(cursoId);
+
+    public IEnumerable<DeliveryResponse> GetDeliveriesByAssignmentAll(int asignacionId) =>
+        _assignmentService.GetDeliveriesByAssignmentAll(asignacionId);
 }

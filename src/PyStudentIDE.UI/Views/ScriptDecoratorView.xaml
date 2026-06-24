@@ -2,8 +2,9 @@
     x:Class="PyStudentIDE.UI.Views.ScriptDecoratorView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="#1E1E1E">
-    <Grid Margin="20">
+    Background="{DynamicResource WindowBackground}"
+    Foreground="{DynamicResource PrimaryText}">
+    <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -11,20 +12,21 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,12">
-            <Button Content="Cargar script" Width="120" Margin="0,0,8,0" Click="OnLoadScript" />
-            <Button Content="Refrescar" Width="100" Margin="0,0,8,0" Click="OnReload" />
-            <Button Content="Firmar" Width="100" Margin="0,0,8,0" Click="OnSign" />
-            <Button Content="Verificar firma" Width="130" Margin="0,0,8,0" Click="OnVerify" />
-            <Button Content="Regenerar firma" Width="140" Click="OnRegenerate" />
+            <Button Content="📂 Cargar script" Style="{DynamicResource ModernButton}" Width="130" Margin="0,0,8,0" Click="OnLoadScript" />
+            <Button Content="🔄 Refrescar" Style="{DynamicResource ModernButton}" Width="110" Margin="0,0,8,0" Click="OnReload" />
+            <Button Content="🔏 Firmar" Style="{DynamicResource ModernButton}" Width="110" Margin="0,0,8,0" Click="OnSign" />
+            <Button Content="✅ Verificar" Style="{DynamicResource ModernButton}" Width="130" Margin="0,0,8,0" Click="OnVerify" />
+            <Button Content="🔄 Regenerar" Style="{DynamicResource ModernButton}" Width="140" Click="OnRegenerate" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
-            <TextBlock x:Name="FilePathText" Foreground="#A0AEC0" FontSize="12" />
-            <TextBlock x:Name="StatusText" Foreground="#FBBF24" FontSize="12" Margin="0,4,0,0" />
+            <TextBlock x:Name="FilePathText" Foreground="{DynamicResource SecondaryText}" FontSize="12" />
+            <TextBlock x:Name="StatusText" Foreground="{DynamicResource WarningBrush}" FontSize="12" Margin="0,4,0,0" />
         </StackPanel>
 
-        <Border Grid.Row="2" BorderBrush="#30363D" BorderThickness="1" CornerRadius="8">
-            <RichTextBox x:Name="ScriptViewer" Background="#1E1E1E" Foreground="#E5E7EB" IsReadOnly="True" BorderThickness="0" />
+        <Border Grid.Row="2" Style="{DynamicResource CardBorder}" Padding="0">
+            <RichTextBox x:Name="ScriptViewer" Background="{DynamicResource EditorBackground}"
+                         Foreground="{DynamicResource PrimaryText}" IsReadOnly="True" BorderThickness="0" />
         </Border>
     </Grid>
 </UserControl>

@@ -3,30 +3,66 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="PyStudentIDE" Height="800" Width="1200"
-    WindowStartupLocation="CenterScreen">
+    WindowStartupLocation="CenterScreen"
+    Background="{DynamicResource WindowBackground}"
+    Foreground="{DynamicResource PrimaryText}">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <!-- Login overlay (shown when not authenticated) -->
+        <ContentControl x:Name="LoginContent" Visibility="Visible" />
 
-        <!-- Sidebar Navigation -->
-        <Border Grid.Column="0" Background="#2D2D2D">
-            <StackPanel Margin="10">
-                <TextBlock Text="PyStudentIDE" FontSize="20" Foreground="White" FontWeight="Bold" Margin="0,0,0,20"/>
-                <Button Content="Dashboard" Margin="0,5" Height="40" Click="OnDashboardClick"/>
-                <Button Content="Editor" Margin="0,5" Height="40" Click="OnEditorClick"/>
-                <Button Content="Asignaciones" Margin="0,5" Height="40" Click="OnAssignmentsClick"/>
-                <Button Content="Terminal" Margin="0,5" Height="40" Click="OnTerminalClick"/>
-                <Button Content="Decorator" Margin="0,5" Height="40" Click="OnDecoratorClick"/>
-                <Button Content="Cerrar Sesión" Margin="0,5" Height="40" Click="OnLogoutClick"/>
-            </StackPanel>
-        </Border>
+        <!-- Main application layout (hidden until login) -->
+        <Grid x:Name="MainLayout" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <!-- Main Content Area -->
-        <Grid Grid.Column="1">
-            <ContentControl x:Name="MainContent" />
+            <!-- Sidebar Navigation -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Brand -->
+                    <StackPanel Grid.Row="0" Margin="14,16,14,24">
+                        <TextBlock Text="PyStudentIDE" FontSize="22" FontWeight="Bold"
+                                   Foreground="{DynamicResource SidebarTextHover}" />
+                        <TextBlock Text="Editor de Python Académico" FontSize="11"
+                                   Foreground="{DynamicResource SidebarText}" Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <!-- Navigation -->
+                    <StackPanel Grid.Row="1" Margin="8,0">
+                        <Button Content="📊 Dashboard" Style="{DynamicResource SidebarButton}" Click="OnDashboardClick" />
+                        <Button x:Name="TeacherNavBtn" Content="📚 Gestión Docente" Style="{DynamicResource SidebarButton}"
+                                Click="OnTeacherPanelClick" Visibility="Collapsed" />
+                        <Button x:Name="StudentNavBtn" Content="📋 Asignaciones" Style="{DynamicResource SidebarButton}"
+                                Click="OnAssignmentsClick" Visibility="Collapsed" />
+                        <Button Content="✏️ Editor" Style="{DynamicResource SidebarButton}" Click="OnEditorClick" />
+                        <Button Content="💻 Terminal" Style="{DynamicResource SidebarButton}" Click="OnTerminalClick" />
+                        <Button Content="🎨 Decorator" Style="{DynamicResource SidebarButton}" Click="OnDecoratorClick" />
+
+                        <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="14,8" />
+                    </StackPanel>
+
+                    <!-- Bottom actions -->
+                    <StackPanel Grid.Row="2" Margin="8,0,8,12">
+                        <Button x:Name="ThemeToggle" Style="{DynamicResource SidebarButton}"
+                                Click="OnToggleTheme" />
+                        <Button Content="🚪 Cerrar Sesión" Style="{DynamicResource SidebarButton}"
+                                Click="OnLogoutClick" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Main Content Area -->
+            <Grid Grid.Column="1" Background="{DynamicResource WindowBackground}">
+                <ContentControl x:Name="MainContent" />
+            </Grid>
         </Grid>
     </Grid>
 </Window>

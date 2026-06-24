@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PyStudentIDE.Application.DTOs;
 using PyStudentIDE.Application.Services;
@@ -12,6 +13,7 @@ public class AuthController : ControllerBase
 
     public AuthController(IAuthService authService) { _authService = authService; }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
@@ -21,6 +23,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
@@ -30,10 +33,23 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPost("validate")]
-    public IActionResult ValidateToken([FromBody] string token)
+    public IActionResult ValidateToken()
     {
-        var valid = _authService.ValidateToken(token);
-        return Ok(new { valid });
+        return Ok(new { valid = true });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            usuarioId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            nombre = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value,
+            correo = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
+            rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+        });
     }
 }

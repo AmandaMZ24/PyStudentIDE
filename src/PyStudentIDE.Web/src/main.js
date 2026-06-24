@@ -144,6 +144,92 @@ btnListAsignaciones.addEventListener("click", async () => {
   }
 });
 
+const btnSubmitDelivery = document.getElementById("btnSubmitDelivery");
+const btnResubmitDelivery = document.getElementById("btnResubmitDelivery");
+const btnRunTests = document.getElementById("btnRunTests");
+const testResultsEl = document.getElementById("testResults");
+const gitOutputEl = document.getElementById("gitOutput");
+
+// -- Git --
+const btnGitInit = document.getElementById("btnGitInit");
+const btnGitStatus = document.getElementById("btnGitStatus");
+const btnGitLog = document.getElementById("btnGitLog");
+const btnGitAdd = document.getElementById("btnGitAdd");
+const btnGitCommit = document.getElementById("btnGitCommit");
+const btnGitPush = document.getElementById("btnGitPush");
+const btnGitPull = document.getElementById("btnGitPull");
+
+function gitPost(action, extra = {}) {
+  const cursoId = Number(getValue("gitCursoId"));
+  const repoPath = getValue("gitRepoPath");
+  return apiRequest(`/api/git/${action}`, "POST", { cursoId, repoPath, ...extra });
+}
+
+async function showGitResult(promise) {
+  const result = await promise;
+  if (result) gitOutputEl.textContent = result.output || JSON.stringify(result, null, 2);
+}
+
+btnGitInit.addEventListener("click", () => showGitResult(gitPost("init")));
+btnGitAdd.addEventListener("click", () => showGitResult(gitPost("add", { filePattern: "*" })));
+btnGitCommit.addEventListener("click", () => showGitResult(gitPost("commit", { message: getValue("gitCommitMsg") || "Avance", entregaId: 0 })));
+btnGitPush.addEventListener("click", () => showGitResult(gitPost("push")));
+btnGitPull.addEventListener("click", () => showGitResult(gitPost("pull")));
+
+btnGitStatus.addEventListener("click", async () => {
+  const cursoId = Number(getValue("gitCursoId"));
+  const repoPath = getValue("gitRepoPath");
+  const result = await apiRequest(`/api/git/status?cursoId=${cursoId}&repoPath=${encodeURIComponent(repoPath)}`, "GET");
+  if (result) gitOutputEl.textContent = result.output || JSON.stringify(result, null, 2);
+});
+
+btnGitLog.addEventListener("click", async () => {
+  const cursoId = Number(getValue("gitCursoId"));
+  const repoPath = getValue("gitRepoPath");
+  const result = await apiRequest(`/api/git/log?cursoId=${cursoId}&repoPath=${encodeURIComponent(repoPath)}`, "GET");
+  if (result) gitOutputEl.textContent = result.output || JSON.stringify(result, null, 2);
+});
+
+// -- Delivery --
+btnSubmitDelivery.addEventListener("click", async () => {
+  const payload = {
+    idAsignacion: Number(getValue("deliveryAsigId")),
+    idEstudiante: Number(getValue("deliveryUserId")),
+    rutaArchivo: getValue("deliveryPath"),
+    contenidoBase64: getValue("deliveryContent")
+  };
+  const result = await apiRequest("/api/entregas", "POST", payload);
+  if (result) writeLog(`Entrega: ${result.exitoso ? "✅" : "❌"} - ${result.mensaje}`);
+});
+
+btnResubmitDelivery.addEventListener("click", async () => {
+  const entregaAnteriorId = Number(getValue("resubmitId"));
+  const payload = {
+    idAsignacion: Number(getValue("deliveryAsigId")),
+    idEstudiante: Number(getValue("deliveryUserId")),
+    rutaArchivo: getValue("deliveryPath"),
+    contenidoBase64: getValue("deliveryContent")
+  };
+  const result = await apiRequest(`/api/entregas/resubmit/${entregaAnteriorId}`, "POST", payload);
+  if (result) writeLog(`Re-entrega: ${result.exitoso ? "✅" : "❌"} - ${result.mensaje}`);
+});
+
+// -- Tests --
+btnRunTests.addEventListener("click", async () => {
+  const payload = {
+    assignmentId: Number(getValue("testAsigId")),
+    entregaId: Number(getValue("testEntregaId")),
+    filePath: getValue("testFilePath")
+  };
+  const result = await apiRequest("/api/pruebas/ejecutar", "POST", payload);
+  if (result) {
+    testResultsEl.textContent = `Total: ${result.total} | Aprobadas: ${result.aprobadas} | Fallidas: ${result.fallidas}\n\n` +
+      (result.resultados || []).map(r =>
+        `${r.passed ? "✅" : "❌"} ${r.caseName}${r.errorMessage ? ` - ${r.errorMessage}` : ""}`
+      ).join("\n");
+  }
+});
+
 function getValue(id) {
   return document.getElementById(id).value.trim();
 }

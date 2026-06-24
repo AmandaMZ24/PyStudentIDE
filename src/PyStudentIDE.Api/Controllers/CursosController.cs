@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PyStudentIDE.Application.DTOs;
 using PyStudentIDE.Application.Facade;
@@ -5,6 +7,7 @@ using PyStudentIDE.Application.Facade;
 namespace PyStudentIDE.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class CursosController : ControllerBase
 {
@@ -13,8 +16,9 @@ public class CursosController : ControllerBase
     public CursosController(PyStudentFacade facade) { _facade = facade; }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateCursoRequest request, [FromHeader] int docenteId)
+    public IActionResult Create([FromBody] CreateCursoRequest request)
     {
+        var docenteId = GetUserId();
         var curso = _facade.CreateCourse(request, docenteId);
         return Ok(curso);
     }
@@ -32,4 +36,22 @@ public class CursosController : ControllerBase
         var cursos = _facade.GetMyCourses(usuarioId);
         return Ok(cursos);
     }
+
+    [HttpGet("mios")]
+    public IActionResult GetMyCourses()
+    {
+        var usuarioId = GetUserId();
+        var cursos = _facade.GetMyCourses(usuarioId);
+        return Ok(cursos);
+    }
+
+    [HttpGet("{id}/estudiantes")]
+    public IActionResult GetStudents(int id)
+    {
+        var estudiantes = _facade.GetStudentsByCourse(id);
+        return Ok(estudiantes);
+    }
+
+    private int GetUserId() =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }

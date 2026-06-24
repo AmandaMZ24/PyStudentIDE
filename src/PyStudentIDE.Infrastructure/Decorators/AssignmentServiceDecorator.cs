@@ -88,4 +88,29 @@ public class AssignmentServiceDecorator : IAssignmentService
     {
         return _inner.GetCoursesByUser(usuarioId);
     }
+
+    public IEnumerable<DeliveryDTO> GetDeliveriesByAssignment(int asignacionId, int estudianteId)
+    {
+        return _inner.GetDeliveriesByAssignment(asignacionId, estudianteId);
+    }
+
+    public IEnumerable<DeliveryResponse> GetDeliveriesByStudent(int estudianteId)
+    {
+        return _inner.GetDeliveriesByStudent(estudianteId);
+    }
+
+    public IEnumerable<UsuarioResponse> GetStudentsByCourse(int cursoId)
+    {
+        return _inner.GetStudentsByCourse(cursoId);
+    }
+
+    public IEnumerable<DeliveryResponse> GetDeliveriesByAssignmentAll(int asignacionId)
+    {
+        return _inner.GetDeliveriesByAssignmentAll(asignacionId);
+    }
+
+    public string? GetDeliveryFileContent(int entregaId)
+    {
+        return _inner.GetDeliveryFileContent(entregaId);
+    }
 }

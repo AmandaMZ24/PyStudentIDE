@@ -1,32 +1,148 @@
 <UserControl
     x:Class="PyStudentIDE.UI.Views.AssignmentPanelView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="20">
-        <StackPanel>
-            <TextBlock Text="Asignaciones" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{DynamicResource WindowBackground}"
+    Foreground="{DynamicResource PrimaryText}">
+    <ScrollViewer>
+        <StackPanel Margin="28">
+            <TextBlock Text="Asignaciones" FontSize="26" FontWeight="Bold" Margin="0,0,0,12"/>
 
-            <TabControl>
-                <TabItem Header="Pendientes">
-                    <ListBox x:Name="PendingList" Height="200"/>
+            <!-- Join Course -->
+            <Border Style="{DynamicResource CardBorder}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Unirse a un Curso" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="ID del curso:" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryText}" FontSize="12" Margin="0,0,8,0" />
+                        <TextBox x:Name="JoinCourseIdBox" Grid.Column="1" Style="{DynamicResource ModernTextBox}"
+                                 Margin="0,0,8,0" />
+                        <Button Grid.Column="2" Content="➕ Unirse" Style="{DynamicResource PrimaryButton}"
+                                Click="OnJoinCourse" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="3" x:Name="JoinResult" FontSize="12"
+                                   Foreground="{DynamicResource SuccessBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <TabControl Style="{DynamicResource ModernTabControl}">
+                <TabItem Header="Pendientes" Style="{DynamicResource ModernTabItem}">
+                    <ListBox x:Name="PendingList" Style="{DynamicResource ModernListBox}" Height="160" SelectionChanged="OnPendingSelection">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Titulo}" Foreground="{DynamicResource PrimaryText}" />
+                                    <TextBlock FontSize="11" Text="{Binding CursoInfo}" Foreground="{DynamicResource SecondaryText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </TabItem>
-                <TabItem Header="Entregadas">
-                    <ListBox x:Name="DeliveredList" Height="200"/>
+                <TabItem Header="Entregadas" Style="{DynamicResource ModernTabItem}">
+                    <ListBox x:Name="DeliveredList" Style="{DynamicResource ModernListBox}" Height="160" SelectionChanged="OnDeliveredSelection">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Titulo}" Foreground="{DynamicResource PrimaryText}" />
+                                    <TextBlock FontSize="11" Text="{Binding CursoInfo}" Foreground="{DynamicResource SecondaryText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </TabItem>
-                <TabItem Header="Vencidas">
-                    <ListBox x:Name="OverdueList" Height="200"/>
+                <TabItem Header="Vencidas" Style="{DynamicResource ModernTabItem}">
+                    <ListBox x:Name="OverdueList" Style="{DynamicResource ModernListBox}" Height="160" SelectionChanged="OnOverdueSelection">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Titulo}" Foreground="{DynamicResource PrimaryText}" />
+                                    <TextBlock FontSize="11" Text="{Binding CursoInfo}" Foreground="{DynamicResource SecondaryText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </TabItem>
             </TabControl>
 
-            <Border Margin="0,15,0,0" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+            <Border Margin="0,16,0,0" Style="{DynamicResource CardBorder}">
                 <StackPanel>
-                    <TextBlock x:Name="AssignmentTitle" FontSize="16" FontWeight="Bold"/>
-                    <TextBlock x:Name="AssignmentDescription" Margin="0,5" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="DeadlineText" Foreground="#E67E22" Margin="0,5"/>
-                    <Button x:Name="SubmitButton" Content="Entregar este archivo" Height="35" Margin="0,10,0,0" Click="OnSubmit"/>
-                    <Button x:Name="ResubmitButton" Content="Volver a entregar" Height="35" Margin="0,5,0,0" Click="OnResubmit" Visibility="Collapsed"/>
+                    <TextBlock x:Name="AssignmentTitle" FontSize="18" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock x:Name="AssignmentDescription" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource SecondaryText}"/>
+                    <TextBlock x:Name="DeadlineText" Foreground="{DynamicResource WarningBrush}" Margin="0,8,0,0" FontSize="13"/>
+
+                    <!-- Feedback -->
+                    <Border x:Name="FeedbackPanel" Style="{DynamicResource CardBorder}" Padding="10"
+                            Visibility="Collapsed" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryText}"
+                                       Text="Retroalimentación" />
+                            <ListBox x:Name="FeedbackList" Style="{DynamicResource ModernListBox}" Height="80" Margin="0,6,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryText}"
+                                                       Text="{Binding NombreDocente}" FontSize="12" />
+                                            <TextBlock FontSize="11" Foreground="{DynamicResource SecondaryText}"
+                                                       Text="{Binding Comentario}" TextWrapping="Wrap" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock FontSize="11" Foreground="{DynamicResource AccentBrush}"
+                                                           Text="{Binding Calificacion, StringFormat='Calificación: \{0:F1\}'}" />
+                                                <TextBlock FontSize="11" Foreground="{DynamicResource SecondaryText}"
+                                                           Text="{Binding FechaCreacion, StringFormat=' | \{0:g\}'}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+
+                    <Button x:Name="SubmitButton" Content="📤 Entregar este archivo" Style="{DynamicResource PrimaryButton}"
+                            Margin="0,14,0,0" Click="OnSubmit"/>
+                    <Button x:Name="ResubmitButton" Content="🔄 Volver a entregar" Style="{DynamicResource ModernButton}"
+                            Margin="0,8,0,0" Click="OnResubmit" Visibility="Collapsed"/>
+
+                    <!-- Test results -->
+                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,10" />
+                    <Button x:Name="TestButton" Content="🧪 Ejecutar Pruebas Automáticas"
+                            Style="{DynamicResource ModernButton}" Margin="0,0,0,8"
+                            Click="OnRunTests" Visibility="Collapsed"/>
+                    <Border x:Name="TestResultsPanel" Style="{DynamicResource CardBorder}" Padding="10"
+                            Visibility="Collapsed" Margin="0,0,0,4">
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryText}"
+                                       Text="Resultados de Pruebas" />
+                            <TextBlock x:Name="TestSummary" FontSize="12"
+                                       Foreground="{DynamicResource SecondaryText}" Margin="0,4,0,4" />
+                            <ListBox x:Name="TestResultsList" Style="{DynamicResource ModernListBox}" Height="120">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryText}"
+                                                           Text="{Binding CaseName}" />
+                                                <TextBlock Text=" - " Foreground="{DynamicResource SecondaryText}" />
+                                                <TextBlock Foreground="{DynamicResource SuccessBrush}"
+                                                           Text="{Binding Passed, StringFormat='{}{0}'}" />
+                                            </StackPanel>
+                                            <TextBlock FontSize="11" Foreground="{DynamicResource SecondaryText}"
+                                                       Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </UserControl>
